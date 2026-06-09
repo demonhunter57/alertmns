@@ -1,0 +1,141 @@
+/* ===== Page Login ===== */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #1a1a2e;
+}
+
+.login-card {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h1 {
+    color: #e94560;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin: 0 0 0.5rem;
+  }
+
+  p {
+    color: #8892b0;
+    font-size: 0.9rem;
+    margin: 0;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    color: #ccd6f6;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  input {
+    background: #0f3460;
+    border: 1px solid #1a4a7a;
+    border-radius: 8px;
+    color: #e6f1ff;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    &::placeholder {
+      color: #4a5568;
+    }
+  }
+}
+
+.error-message {
+  background: rgba(233, 69, 96, 0.15);
+  border: 1px solid #e94560;
+  border-radius: 6px;
+  color: #e94560;
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
+}
+
+.btn-primary {
+  background: #e94560;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.85rem;
+  transition: background 0.2s, transform 0.1s;
+
+  &:hover:not(:disabled) {
+    background: #c73652;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.login-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #64ffda;
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: underline;
+
+  &:hover { color: #9efff0; }
+}
+
+.demo-accounts {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+
+  p {
+    color: #8892b0;
+    font-size: 0.8rem;
+    margin: 0 0 0.5rem;
+  }
+
+  code {
+    display: block;
+    color: #64ffda;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+    line-height: 1.8;
+  }
+}

@@ -1,0 +1,91 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>AlertMNS</h1>
+      <p>Messagerie interne sécurisée</p>
+    </div>
+
+    <form class="login-form" (ngSubmit)="submit()">
+
+      <div class="form-group">
+        <label for="username">Identifiant</label>
+        <input
+          id="username"
+          type="text"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="Votre identifiant"
+          autocomplete="username"
+          required
+        />
+      </div>
+
+      @if (isRegisterMode()) {
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="votre@email.fr"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="displayName">Nom affiché</label>
+          <input
+            id="displayName"
+            type="text"
+            [(ngModel)]="displayName"
+            name="displayName"
+            placeholder="Prénom Nom"
+            required
+          />
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      @if (error()) {
+        <div class="error-message">{{ error() }}</div>
+      }
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading()">
+        @if (isLoading()) {
+          <span>Connexion...</span>
+        } @else {
+          <span>{{ isRegisterMode() ? 'Créer un compte' : 'Se connecter' }}</span>
+        }
+      </button>
+
+    </form>
+
+    <div class="login-footer">
+      <button type="button" class="btn-link" (click)="toggleMode()">
+        {{ isRegisterMode()
+          ? 'Déjà un compte ? Se connecter'
+          : 'Pas de compte ? S\'inscrire' }}
+      </button>
+    </div>
+
+    <div class="demo-accounts">
+      <p>Comptes de démo :</p>
+      <code>admin / admin123</code>
+      <code>sofia / user123</code>
+      <code>marc / user123</code>
+    </div>
+  </div>
+</div>

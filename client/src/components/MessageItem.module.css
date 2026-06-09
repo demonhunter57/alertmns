@@ -1,0 +1,119 @@
+.msg {
+  display: flex;
+  gap: 10px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  position: relative;
+  transition: background .1s;
+}
+.msg:hover { background: var(--bg2); }
+.grouped { padding-top: 1px; }
+
+.avatar {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500;
+  flex-shrink: 0; margin-top: 2px;
+}
+
+.timeGhost {
+  width: 32px;
+  flex-shrink: 0;
+  font-size: 10px;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+}
+.msg:hover .timeGhost { color: var(--t3); }
+
+.body { flex: 1; min-width: 0; }
+
+.meta {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 2px;
+}
+.author { font-weight: 500; font-size: 13px; }
+.role {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--bg3);
+  color: var(--t3);
+}
+.time { font-size: 11px; color: var(--t3); }
+.edited { font-size: 11px; color: var(--t3); }
+
+.text {
+  color: var(--t2);
+  line-height: 1.6;
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.reaction {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--bg3);
+  border: 0.5px solid var(--bd);
+  border-radius: 20px; padding: 2px 8px;
+  font-size: 12px; cursor: pointer;
+  transition: background .1s;
+}
+.reaction:hover { background: var(--bg4); }
+.reactionMine {
+  background: rgba(99,102,241,.15);
+  border-color: rgba(99,102,241,.4);
+}
+.reaction span { color: var(--t2); font-size: 11px; }
+
+.actions {
+  position: absolute;
+  top: -1px; right: 6px;
+  display: flex;
+  gap: 2px;
+  background: var(--bg2);
+  border: 0.5px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+.actionBtn {
+  width: 26px; height: 26px;
+  background: none; border: none;
+  border-radius: 5px; color: var(--t3);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .1s, color .1s;
+}
+.actionBtn:hover { background: var(--bg3); color: var(--t1); }
+.deleteBtn:hover { color: var(--red) !important; }
+
+.emojiWrap { position: relative; }
+.emojiPicker {
+  position: absolute;
+  top: 100%; right: 0;
+  margin-top: 4px;
+  background: var(--bg2);
+  border: 0.5px solid var(--bd);
+  border-radius: var(--radius);
+  padding: 6px;
+  display: flex; gap: 2px;
+  z-index: 10;
+}
+.emojiOpt {
+  width: 30px; height: 30px;
+  background: none; border: none;
+  border-radius: 6px; font-size: 16px;
+  cursor: pointer;
+  transition: background .1s;
+  display: flex; align-items: center; justify-content: center;
+}
+.emojiOpt:hover { background: var(--bg3); }

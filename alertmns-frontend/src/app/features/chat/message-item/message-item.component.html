@@ -1,0 +1,74 @@
+<div
+  class="message-item"
+  (mouseenter)="showActions.set(true)"
+  (mouseleave)="showActions.set(false)"
+>
+  <!-- Avatar auteur -->
+  <div class="avatar" [style.background]="message.author.color">
+    {{ message.author.initials }}
+  </div>
+
+  <div class="message-body">
+    <!-- Header : nom + date -->
+    <div class="message-header">
+      <span class="author-name">{{ message.author.displayName }}</span>
+      <span class="message-time">{{ formattedDate }}</span>
+      @if (message.editedAt) {
+        <span class="edited-badge">(modifié)</span>
+      }
+    </div>
+
+    <!-- Contenu ou mode édition -->
+    @if (isEditing()) {
+      <div class="edit-area">
+        <textarea
+          class="edit-input"
+          [(ngModel)]="editContent"
+          (keydown)="onEditKeyDown($event)"
+          rows="2"
+        ></textarea>
+        <div class="edit-actions">
+          <button class="btn-save" (click)="submitEdit()">Sauvegarder</button>
+          <button class="btn-cancel" (click)="cancelEdit()">Annuler</button>
+        </div>
+      </div>
+    } @else {
+      <p class="message-content">{{ message.content }}</p>
+    }
+
+    <!-- Réactions existantes -->
+    @if (reactionEntries.length > 0) {
+      <div class="reactions">
+        @for (r of reactionEntries; track r.emoji) {
+          <button
+            class="reaction"
+            [class.reacted]="hasUserReacted(r.users)"
+            (click)="react(r.emoji)"
+          >
+            {{ r.emoji }} {{ r.users.length }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Actions (visible au hover) -->
+  @if (showActions()) {
+    <div class="message-actions">
+      @for (emoji of QUICK_EMOJIS; track emoji) {
+        <button class="action-btn emoji-btn" (click)="react(emoji)">
+          {{ emoji }}
+        </button>
+      }
+      @if (isAuthor) {
+        <button class="action-btn edit-btn" (click)="startEdit()" title="Modifier">
+          ✏️
+        </button>
+        <button class="action-btn delete-btn" (click)="delete()" title="Supprimer">
+          🗑️
+        </button>
+      }
+    </div>
+  }
+
+</div>

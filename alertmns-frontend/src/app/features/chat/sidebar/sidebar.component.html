@@ -1,0 +1,79 @@
+<aside class="sidebar">
+
+  <!-- Logo -->
+  <div class="sidebar-header">
+    <span class="logo">AlertMNS</span>
+  </div>
+
+  <!-- Canaux publics -->
+  <div class="channel-section">
+    <div class="section-title">CANAUX</div>
+    @for (channel of publicChannels; track channel.id) {
+      <button
+        class="channel-item"
+        [class.active]="activeChannel?.id === channel.id"
+        (click)="selectChannel(channel)"
+      >
+        <span class="channel-hash">#</span>
+        <span class="channel-name">{{ channel.name }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Canaux privés -->
+  @if (privateChannels.length > 0) {
+    <div class="channel-section">
+      <div class="section-title">PRIVÉS</div>
+      @for (channel of privateChannels; track channel.id) {
+        <button
+          class="channel-item"
+          [class.active]="activeChannel?.id === channel.id"
+          (click)="selectChannel(channel)"
+        >
+          <span class="channel-hash">🔒</span>
+          <span class="channel-name">{{ channel.name }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Utilisateurs en ligne -->
+  <div class="channel-section users-section">
+    <div class="section-title">EN LIGNE — {{ onlineUsers.length }}</div>
+    @for (user of onlineUsers; track user.id) {
+      <div class="user-item">
+        <div
+          class="user-avatar"
+          [style.background]="user.color"
+        >{{ user.initials }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ user.displayName }}</span>
+          @if (user.status === 'AWAY' && user.absentMessage) {
+            <span class="user-away">{{ user.absentMessage }}</span>
+          }
+        </div>
+        <span
+          class="status-dot"
+          [style.background]="statusColor(user.status)"
+        ></span>
+      </div>
+    }
+  </div>
+
+  <!-- Profil + Déconnexion -->
+  <div class="sidebar-footer">
+    @if (currentUser) {
+      <div class="current-user">
+        <div class="user-avatar small" [style.background]="currentUser.color">
+          {{ currentUser.initials }}
+        </div>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser.displayName }}</span>
+          <span class="user-role">{{ currentUser.role }}</span>
+        </div>
+      </div>
+    }
+    <button class="btn-logout" (click)="logout()">Déconnexion</button>
+  </div>
+
+</aside>

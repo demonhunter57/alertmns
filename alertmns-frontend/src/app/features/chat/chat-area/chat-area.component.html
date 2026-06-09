@@ -1,0 +1,63 @@
+<div class="chat-area">
+
+  <!-- Header du canal -->
+  <div class="chat-header">
+    <div class="channel-info">
+      <span class="channel-prefix">{{ channel.isPrivate ? '🔒' : '#' }}</span>
+      <span class="channel-name">{{ channel.name }}</span>
+      @if (channel.description) {
+        <span class="channel-desc">{{ channel.description }}</span>
+      }
+    </div>
+    <app-export-menu [channelId]="channel.id" />
+  </div>
+
+  <!-- Liste des messages -->
+  <div class="messages-container">
+    @if (isLoading()) {
+      <div class="loading">Chargement...</div>
+    }
+
+    @for (message of messages(); track message.id) {
+      <app-message-item
+        [message]="message"
+        [currentUser]="currentUser"
+        (deleted)="onMessageDeleted($event)"
+        (edited)="onMessageEdited($event)"
+        (reacted)="onMessageReacted($event)"
+      />
+    }
+
+    <!-- Indicateur de frappe -->
+    @if (typingUsers().length > 0) {
+      <div class="typing-indicator">
+        <span class="typing-dots">
+          <span></span><span></span><span></span>
+        </span>
+        <span>{{ getTypingUserNames() }} est en train d'écrire...</span>
+      </div>
+    }
+
+    <div #messagesEnd></div>
+  </div>
+
+  <!-- Zone de saisie -->
+  <div class="message-input-area">
+    <textarea
+      class="message-input"
+      [(ngModel)]="messageInput"
+      (keydown)="onKeyDown($event)"
+      (input)="onInputChange()"
+      [placeholder]="'Message #' + channel.name"
+      rows="1"
+    ></textarea>
+    <button
+      class="btn-send"
+      (click)="sendMessage()"
+      [disabled]="!messageInput.trim()"
+    >
+      ➤
+    </button>
+  </div>
+
+</div>
