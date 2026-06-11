@@ -7,55 +7,66 @@
 
   <!-- Canaux publics -->
   <div class="channel-section">
-    <div class="section-title">CANAUX</div>
+    <div class="section-header">
+      <span class="section-title">CANAUX</span>
+      <button class="btn-add" title="Créer un canal" (click)="openCreate()">+</button>
+    </div>
     @for (channel of publicChannels; track channel.id) {
-      <button
-        class="channel-item"
-        [class.active]="activeChannel?.id === channel.id"
-        (click)="selectChannel(channel)"
-      >
-        <span class="channel-hash">#</span>
-        <span class="channel-name">{{ channel.name }}</span>
-      </button>
+      <div class="channel-row">
+        <button
+          class="channel-item"
+          [class.active]="activeChannel?.id === channel.id"
+          (click)="selectChannel(channel)"
+        >
+          <span class="channel-hash">#</span>
+          <span class="channel-name">{{ channel.name }}</span>
+        </button>
+        @if (canManage(channel)) {
+          <button class="btn-manage" title="Gérer le canal" (click)="openManage(channel, $event)">⚙</button>
+        }
+      </div>
     }
   </div>
 
   <!-- Canaux privés -->
   @if (privateChannels.length > 0) {
     <div class="channel-section">
-      <div class="section-title">PRIVÉS</div>
+      <div class="section-header">
+        <span class="section-title">PRIVÉS</span>
+      </div>
       @for (channel of privateChannels; track channel.id) {
-        <button
-          class="channel-item"
-          [class.active]="activeChannel?.id === channel.id"
-          (click)="selectChannel(channel)"
-        >
-          <span class="channel-hash">🔒</span>
-          <span class="channel-name">{{ channel.name }}</span>
-        </button>
+        <div class="channel-row">
+          <button
+            class="channel-item"
+            [class.active]="activeChannel?.id === channel.id"
+            (click)="selectChannel(channel)"
+          >
+            <span class="channel-hash">🔒</span>
+            <span class="channel-name">{{ channel.name }}</span>
+          </button>
+          @if (canManage(channel)) {
+            <button class="btn-manage" title="Gérer le canal" (click)="openManage(channel, $event)">⚙</button>
+          }
+        </div>
       }
     </div>
   }
 
   <!-- Utilisateurs en ligne -->
   <div class="channel-section users-section">
-    <div class="section-title">EN LIGNE — {{ onlineUsers.length }}</div>
+    <div class="section-header">
+      <span class="section-title">EN LIGNE — {{ onlineUsers.length }}</span>
+    </div>
     @for (user of onlineUsers; track user.id) {
       <div class="user-item">
-        <div
-          class="user-avatar"
-          [style.background]="user.color"
-        >{{ user.initials }}</div>
+        <div class="user-avatar" [style.background]="user.color">{{ user.initials }}</div>
         <div class="user-info">
           <span class="user-name">{{ user.displayName }}</span>
           @if (user.status === 'AWAY' && user.absentMessage) {
             <span class="user-away">{{ user.absentMessage }}</span>
           }
         </div>
-        <span
-          class="status-dot"
-          [style.background]="statusColor(user.status)"
-        ></span>
+        <span class="status-dot" [style.background]="statusColor(user.status)"></span>
       </div>
     }
   </div>
@@ -64,9 +75,7 @@
   <div class="sidebar-footer">
     @if (currentUser) {
       <div class="current-user">
-        <div class="user-avatar small" [style.background]="currentUser.color">
-          {{ currentUser.initials }}
-        </div>
+        <div class="user-avatar small" [style.background]="currentUser.color">{{ currentUser.initials }}</div>
         <div class="user-info">
           <span class="user-name">{{ currentUser.displayName }}</span>
           <span class="user-role">{{ currentUser.role }}</span>
@@ -77,3 +86,112 @@
   </div>
 
 </aside>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODALE — Créer un canal                                     -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (showCreate()) {
+  <div class="modal-overlay" (click)="closeCreate()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span>Créer un canal</span>
+        <button class="btn-close" (click)="closeCreate()">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="field-label">Nom du canal *</label>
+        <input
+          class="field-input"
+          [(ngModel)]="createName"
+          placeholder="ex: annonces"
+          maxlength="50"
+          (keyup.enter)="submitCreate()"
+        />
+        <label class="field-label">Description</label>
+        <input
+          class="field-input"
+          [(ngModel)]="createDesc"
+          placeholder="Optionnel"
+          maxlength="200"
+        />
+        <label class="field-check">
+          <input type="checkbox" [(ngModel)]="createPriv" />
+          <span>Canal privé (membres invités uniquement)</span>
+        </label>
+        @if (createError) {
+          <p class="field-error">{{ createError }}</p>
+        }
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeCreate()">Annuler</button>
+        <button class="btn-primary" (click)="submitCreate()" [disabled]="createLoading">
+          {{ createLoading ? 'Création...' : 'Créer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODALE — Gérer un canal (membres + suppression)             -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+@if (showManage() && managedChannel) {
+  <div class="modal-overlay" (click)="closeManage()">
+    <div class="modal modal-wide" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <span>Gérer — #{{ managedChannel.name }}</span>
+        <button class="btn-close" (click)="closeManage()">✕</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Membres actuels -->
+        <p class="field-label">Membres actuels</p>
+        @if (membersOf(managedChannel).length === 0) {
+          <p class="empty-hint">Aucun membre.</p>
+        }
+        @for (user of membersOf(managedChannel); track user.id) {
+          <div class="member-row">
+            <div class="user-avatar small" [style.background]="user.color">{{ user.initials }}</div>
+            <span class="member-name">{{ user.displayName }}</span>
+            <span class="member-role">{{ user.role }}</span>
+            <button class="btn-remove" (click)="removeMember(user.id)" [disabled]="manageLoading">
+              Retirer
+            </button>
+          </div>
+        }
+
+        <!-- Ajouter des membres -->
+        @if (nonMembersOf(managedChannel).length > 0) {
+          <p class="field-label" style="margin-top:1rem">Ajouter des membres</p>
+          @for (user of nonMembersOf(managedChannel); track user.id) {
+            <div class="member-row">
+              <div class="user-avatar small" [style.background]="user.color">{{ user.initials }}</div>
+              <span class="member-name">{{ user.displayName }}</span>
+              <span class="member-role">{{ user.role }}</span>
+              <button class="btn-add-member" (click)="addMember(user.id)" [disabled]="manageLoading">
+                Ajouter
+              </button>
+            </div>
+          }
+        }
+
+        @if (manageError) {
+          <p class="field-error">{{ manageError }}</p>
+        }
+      </div>
+
+      <!-- Suppression (admin uniquement) -->
+      @if (isAdmin) {
+        <div class="modal-danger">
+          <span class="danger-label">Zone dangereuse</span>
+          <button class="btn-delete" (click)="deleteChannel()" [disabled]="manageLoading">
+            🗑 Supprimer ce canal
+          </button>
+        </div>
+      }
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeManage()">Fermer</button>
+      </div>
+    </div>
+  </div>
+}

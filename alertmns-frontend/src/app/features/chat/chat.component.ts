@@ -83,6 +83,16 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.activeChannel.set(channel);
   }
 
+  reloadChannels(): void {
+    this.channelService.getChannels().subscribe(channels => {
+      this.channels.set(channels);
+      const active = this.activeChannel();
+      if (active && !channels.find(c => c.id === active.id)) {
+        this.activeChannel.set(channels[0] ?? null);
+      }
+    });
+  }
+
   logout(): void {
     this.wsService.disconnect();
     this.authService.logout();
