@@ -1,0 +1,22 @@
+[Unit]
+Description=AlertMNS — Spring Boot Backend
+After=network.target
+
+[Service]
+Type=simple
+User=tmichel
+WorkingDirectory=/opt/alertmns
+
+ExecStart=/usr/bin/java -jar \
+    -Dspring.profiles.active=prod \
+    /opt/alertmns/alertmns-backend.jar
+
+Restart=on-failure
+RestartSec=10
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=alertmns
+
+[Install]
+WantedBy=multi-user.target
