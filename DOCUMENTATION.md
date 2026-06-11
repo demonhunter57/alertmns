@@ -41,6 +41,7 @@
 6. [Référence WebSocket STOMP](#6-référence-websocket-stomp)
 7. [Modèle de données](#7-modèle-de-données)
 8. [Flux d'authentification](#8-flux-dauthentification)
+   - 8.1 [Diagrammes de séquence](#81-diagrammes-de-séquence)
 9. [Décisions architecturales](#9-décisions-architecturales)
 10. [Guide de démarrage](#10-guide-de-démarrage)
 11. [Comptes de démonstration](#11-comptes-de-démonstration)
@@ -1045,6 +1046,140 @@ dm_participants (table de jointure)
    │
 8. Toutes les requêtes HTTP suivantes :
    └── authInterceptor : req.clone({ Authorization: "Bearer eyJ..." })
+```
+
+---
+
+## 8.1 Diagrammes de séquence
+
+### Séquence 1 — Authentification (Login)
+
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant LC as LoginComponent<br/>(Angular)
+    participant AI as AuthInterceptor<br/>(Angular)
+    participant AS as AuthService<br/>(Angular)
+    participant API as AuthController<br/>(Spring Boot)
+    participant SEC as JwtAuthFilter<br/>(Spring Security)
+    participant SVC as AuthService<br/>(Spring Boot)
+    participant DB as Base de données<br/>(H2 / PostgreSQL)
+
+    U->>LC: Saisit username + password
+    LC->>AS: login(username, password)
+    AS->>API: POST /api/auth/login<br/>{"username","password"}
+    Note over API,SEC: Pas de filtre JWT sur /api/auth/login<br/>(route publique)
+    API->>SVC: login(LoginRequest)
+    SVC->>DB: findByUsername("admin")
+    DB-->>SVC: User (avec passwordHash)
+    SVC->>SVC: bcrypt.matches(password, hash)
+    SVC->>SVC: jwtTokenProvider.generateToken(userId)
+    SVC-->>API: LoginResponse {token, UserResponse}
+    API-->>AS: 200 OK {token, user}
+    AS->>AS: localStorage.set("alertmns_token", token)
+    AS->>AS: currentUser.set(user)
+    AS-->>LC: LoginResponse
+    LC->>LC: router.navigate(["/chat"])
+```
+
+---
+
+### Séquence 2 — Envoi d'un message (flux HTTP + WebSocket)
+
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant CA as ChatAreaComponent<br/>(Angular)
+    participant WS as WebSocketService<br/>(Angular)
+    participant STOMP as STOMP Broker<br/>(Spring Boot)
+    participant WC as WebSocketController<br/>(Spring Boot)
+    participant MS as MessageService<br/>(Spring Boot)
+    participant DB as Base de données
+
+    U->>CA: Tape un message + appuie Entrée
+    CA->>WS: publish("/app/chat.send", {channelId, content})
+    Note over WS,STOMP: Token JWT envoyé dans le header STOMP CONNECT<br/>(fait une seule fois à la connexion)
+    WS->>STOMP: STOMP SEND /app/chat.send
+    STOMP->>WC: @MessageMapping("/chat.send")
+    WC->>WC: extractUserId(Principal) → UUID
+    WC->>MS: saveMessage(channelId, authorId, content)
+    MS->>DB: INSERT INTO messages (...)
+    DB-->>MS: Message sauvegardé
+    MS-->>WC: MessageResponse
+    WC->>STOMP: convertAndSend("/topic/channel.{id}", event)
+    Note over STOMP,CA: Le broker diffuse à TOUS<br/>les abonnés du canal
+    STOMP-->>CA: WsEvent {type:"message:new", data: Message}
+    CA->>CA: messages.update(list => [...list, newMsg])
+    CA->>CA: scrollToBottom()
+```
+
+---
+
+### Séquence 3 — Requête REST authentifiée (ex : charger les canaux)
+
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant CC as ChatComponent<br/>(Angular)
+    participant AI as AuthInterceptor<br/>(Angular)
+    participant HTTP as HttpClient<br/>(Angular)
+    participant JF as JwtAuthFilter<br/>(Spring Boot)
+    participant JP as JwtTokenProvider<br/>(Spring Boot)
+    participant CTRL as ChannelController<br/>(Spring Boot)
+    participant SVC as ChannelService<br/>(Spring Boot)
+    participant DB as Base de données
+
+    U->>CC: Navigation vers /chat
+    CC->>HTTP: GET /api/channels
+    Note over HTTP,AI: L'intercepteur clone chaque requête<br/>et ajoute le header Authorization
+    AI->>AI: token = localStorage.get("alertmns_token")
+    AI->>HTTP: req.clone({headers: "Authorization: Bearer eyJ..."})
+    HTTP->>JF: GET /api/channels<br/>Authorization: Bearer eyJ...
+    JF->>JP: validateToken(token)
+    JP-->>JF: true
+    JF->>JP: extractUserId(token) → UUID
+    JF->>JF: SecurityContext.setAuthentication(auth)
+    JF->>CTRL: passe la requête au controller
+    CTRL->>SVC: getAccessibleChannels(userId)
+    SVC->>DB: findAccessibleChannels(userId)<br/>(canaux publics + canaux privés dont membre)
+    DB-->>SVC: List<Channel>
+    SVC-->>CTRL: List<ChannelResponse>
+    CTRL-->>HTTP: 200 OK [ChannelResponse...]
+    HTTP-->>CC: channels[]
+    CC->>CC: channels.set(data)
+```
+
+---
+
+### Séquence 4 — Connexion WebSocket (handshake JWT)
+
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant APP as APP_INITIALIZER<br/>(Angular)
+    participant AS as AuthService<br/>(Angular)
+    participant WS as WebSocketService<br/>(Angular)
+    participant SJS as SockJS Client
+    participant WSC as WebSocketConfig<br/>ChannelInterceptor<br/>(Spring Boot)
+    participant SEC as Spring Security
+
+    U->>APP: Application démarre
+    APP->>AS: initFromStorage()
+    AS->>AS: token = localStorage.get("alertmns_token")
+    AS->>AS: GET /api/auth/me (token en header)
+    AS->>AS: currentUser.set(user)
+    AS->>WS: connect(token)
+    WS->>SJS: new SockJS("http://localhost:4000/ws")
+    Note over SJS,WSC: Handshake HTTP → Upgrade WebSocket
+    SJS->>WSC: WebSocket établi
+    WS->>WSC: STOMP CONNECT<br/>headers: {Authorization: "Bearer eyJ..."}
+    WSC->>WSC: ChannelInterceptor.preSend()<br/>extrait token du header CONNECT
+    WSC->>SEC: jwtTokenProvider.validateToken(token)
+    SEC-->>WSC: true
+    WSC->>WSC: accessor.setUser(new UsernamePasswordAuthToken(userId))
+    WSC-->>WS: STOMP CONNECTED
+    WS->>WS: connected$ = true
+    Note over WS: Prêt à recevoir/envoyer des messages
 ```
 
 ---
