@@ -1,0 +1,23 @@
+# ── Node.js ──────────────────────────────
+node_modules/
+
+# ── Maven / Java build ───────────────────
+alertmns-backend/target/
+*.class
+*.jar
+*.war
+
+# ── Angular build ─────────────────────────
+alertmns-frontend/dist/
+
+# ── IDE / Outils ─────────────────────────
+.playwright-mcp/
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+
+# ── OS ───────────────────────────────────
+.DS_Store
+Thumbs.db
