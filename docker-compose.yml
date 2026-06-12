@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./alertmns-backend
+    container_name: alertmns-backend
+    restart: unless-stopped
+    networks:
+      - alertmns-net
+
+  frontend:
+    build: ./alertmns-frontend
+    container_name: alertmns-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - alertmns-net
+
+networks:
+  alertmns-net:
+    driver: bridge

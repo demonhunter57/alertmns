@@ -48,6 +48,7 @@ alertmns/
 ├── deploy/
 │   └── nginx-alertmns.conf         ← Configuration Nginx (SSL, proxy)
 │
+├── docker-compose.yml              ← Orchestration des deux conteneurs
 ├── DOCUMENTATION.md                ← Documentation technique complète
 ├── CHOIX_ARCHITECTURE.md           ← Justification des choix techniques
 └── QUESTIONS_SOUTENANCE_CDA.md     ← 50 Q/R pour la soutenance CDA
@@ -145,6 +146,27 @@ Envois (client → serveur, préfixe /app) :
   /app/dm.send      { recipientId, content }
   /app/status.set   { status, absentUntil?, absentMessage? }
 ```
+
+---
+
+## Docker
+
+### Démarrage avec Docker Compose
+
+```bash
+docker compose up --build
+# Frontend : http://localhost
+# Le frontend Nginx proxifie /api/ et /ws vers le backend
+```
+
+Les deux conteneurs partagent un réseau bridge `alertmns-net`. Le conteneur frontend expose uniquement le port 80 ; le backend n'est pas exposé à l'hôte.
+
+| Conteneur | Image de base | Port interne |
+|-----------|---------------|--------------|
+| `alertmns-backend` | `eclipse-temurin:21-jre-alpine` | 4000 |
+| `alertmns-frontend` | `nginx:alpine` | 80 (exposé) |
+
+> Le profil Spring `docker` est activé automatiquement (H2 console désactivée, CORS `http://localhost`).
 
 ---
 
