@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { RxStomp, RxStompConfig } from '@stomp/rx-stomp';
-import { Observable, Subject, filter, map } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { IMessage } from '@stomp/rx-stomp';
 import { AuthService } from './auth.service';
 import { WsEvent } from '../models/message.model';

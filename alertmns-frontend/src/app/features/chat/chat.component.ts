@@ -1,6 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ChannelService } from '../../core/services/channel.service';
@@ -48,8 +47,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private channelService: ChannelService,
     private userService: UserService,
-    private wsService: WebSocketService,
-    private router: Router
+    private wsService: WebSocketService
   ) {
     effect(() => {
       if (this.isDarkMode()) {
