@@ -3,7 +3,7 @@
 
 > **Projet** : AlertMNS — Messagerie interne sécurisée  
 > **Migration** : Node.js + React → Java 21 + Spring Boot 3 + Angular 17 + PostgreSQL  
-> **Date** : 2026-06-10
+> **Date** : 2026-06-12 (mis à jour)
 
 ---
 
@@ -372,6 +372,7 @@ spring.rabbitmq.host=rabbitmq.production.fr
 | **Architecture en couches** | Testabilité, réutilisabilité, maintenabilité à long terme, standard universel |
 | **DTO / Records Java** | Isolation totale entre l'API et la base de données, le `passwordHash` ne sort jamais |
 | **Signals Angular 17** | État réactif plus performant que `useState`, détection de changements granulaire |
+| **CSS Custom Properties** | Variables CSS pour le thème dark/light, basculement sans rechargement, persistance localStorage |
 
 ---
 

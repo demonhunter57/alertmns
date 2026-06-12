@@ -2,8 +2,8 @@
 ## Migration Java Spring Boot 3 + Angular 17
 
 > **Auteur** : Lead Dev & Architecte  
-> **Date** : 2026-06-09  
-> **Version** : 1.0.0  
+> **Date** : 2026-06-12 (mis à jour)  
+> **Version** : 1.1.0  
 > **Stack originale** : Node.js + Express + React 18 + Socket.io  
 > **Stack cible** : Java 21 + Spring Boot 3.3 + Angular 17 + STOMP WebSocket  
 
@@ -45,6 +45,10 @@
 9. [Décisions architecturales](#9-décisions-architecturales)
 10. [Guide de démarrage](#10-guide-de-démarrage)
 11. [Comptes de démonstration](#11-comptes-de-démonstration)
+12. [Sécurité — corrections appliquées](#12-sécurité--corrections-appliquées)
+13. [Tests unitaires](#13-tests-unitaires)
+14. [Infrastructure & Déploiement](#14-infrastructure--déploiement)
+15. [Thème dark / light](#15-thème-dark--light)
 
 ---
 
@@ -790,6 +794,23 @@ Composant **orchestrateur** (shell) — ne contient pas de logique d'affichage.
 - Relayer les événements WebSocket de statut utilisateur vers le signal `users`
 - Passer les données aux composants enfants via `@Input`
 - Écouter les événements via `@Output` (channelSelected, logoutRequested)
+- Gérer le **thème dark/light** (signal + `localStorage`)
+
+**Gestion du thème :**
+```typescript
+isDarkMode = signal<boolean>(localStorage.getItem('theme') !== 'light');
+
+constructor(...) {
+  effect(() => {
+    document.body.classList.toggle('light-theme', !this.isDarkMode());
+    localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
+  });
+}
+
+toggleTheme(): void { this.isDarkMode.update(v => !v); }
+```
+
+Un bouton flottant ☀️/🌙 (position fixe bas-droite) appelle `toggleTheme()`. La classe `light-theme` sur `<body>` active les variables CSS du thème clair.
 
 **Gestion des abonnements :**
 ```typescript
@@ -1286,4 +1307,223 @@ npm run build:prod
 
 ---
 
-*Documentation générée le 2026-06-09 — AlertMNS v1.0.0*
+---
+
+## 12. Sécurité — corrections appliquées
+
+Audit de sécurité réalisé en juin 2026. Corrections appliquées :
+
+### CORS — whitelist stricte
+
+```java
+// Avant : wildcard dangereuse avec allowCredentials=true (OWASP)
+config.setAllowedOriginPatterns(List.of("*"));
+
+// Après : liste d'origines parsées depuis application.properties
+List<String> origins = Arrays.stream(allowedOrigins.split(","))
+        .map(String::trim).collect(Collectors.toList());
+config.setAllowedOriginPatterns(origins);
+```
+
+Configurable dans `application.properties` :
+```properties
+app.cors.allowed-origins=https://cda-thomas.stagiairesmns.fr,http://localhost:4200
+```
+
+### GlobalExceptionHandler — pas de fuite d'information
+
+```java
+@ExceptionHandler(Exception.class)
+public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+    log.error("Unhandled exception: {}", ex.getMessage(), ex);
+    return ResponseEntity.status(500).body(ErrorResponse.of(500, "Internal server error"));
+    // Jamais : ex.getClass().getSimpleName() + ex.getMessage() (exposait la stack)
+}
+```
+
+### WebSocket — contrôle d'accès canal
+
+```java
+@MessageMapping("/chat.send")
+public void sendMessage(@Payload Map<String, Object> payload, Principal principal) {
+    try {
+        channelService.assertAccess(channelId, authorId); // vérifie l'accès au canal
+    } catch (ResponseStatusException e) {
+        log.warn("WS access denied: user {} on channel {}", authorId, channelId);
+        return; // silently drop
+    }
+    // ... save & broadcast
+}
+```
+
+### Nginx — h2-console supprimée, HTTPS forcé
+
+```nginx
+server {
+    listen 80;
+    return 301 https://$host$request_uri;  # redirection HTTPS
+}
+# Pas de location /h2-console/ exposée en production
+```
+
+---
+
+## 13. Tests unitaires
+
+17 tests JUnit 5 / Mockito couvrant la sécurité et les services.
+
+### `JwtTokenProviderTest` (6 tests)
+
+Instanciation directe sans contexte Spring :
+```java
+class JwtTokenProviderTest {
+    private JwtTokenProvider provider = new JwtTokenProvider(SECRET, 3_600_000L);
+
+    // generateToken_returnsNonNullToken
+    // generateToken_containsCorrectUserId
+    // validateToken_returnsTrueForValidToken
+    // validateToken_returnsFalseForExpiredToken     ← expiration=-1ms
+    // validateToken_returnsFalseForTamperedToken    ← dernier char modifié
+    // extractUserId_returnsCorrectId
+}
+```
+
+### `AuthServiceTest` (6 tests — Mockito)
+
+```java
+@ExtendWith(MockitoExtension.class)
+class AuthServiceTest {
+    @Mock UserRepository userRepository;
+    @Mock JwtTokenProvider jwtTokenProvider;
+    @Mock PasswordEncoder passwordEncoder;
+    @InjectMocks AuthService authService;
+
+    // login_withValidCredentials_returnsToken
+    // login_withWrongPassword_throwsUnauthorized
+    // login_withUnknownUsername_throwsUnauthorized
+    // register_withExistingUsername_throwsConflict
+    // register_withExistingEmail_throwsConflict
+    // register_withValidData_returnsToken
+}
+```
+
+### `ChannelServiceTest` (5 tests — Mockito)
+
+```java
+// getAccessibleChannels_delegatesToRepository
+// createChannel_savesAndReturnsChannel
+// deleteChannel_byNonAdmin_throwsForbidden
+// assertAccess_toPublicChannel_doesNotThrow
+// assertAccess_toPrivateChannelWithoutMembership_throwsForbidden
+```
+
+Lancement :
+```bash
+cd alertmns-backend
+mvn test
+```
+
+---
+
+## 14. Infrastructure & Déploiement
+
+### Topologie
+
+```
+Internet
+   │
+   ▼ HTTPS
+Cloudflare Tunnel (cloudflared)
+   │ HTTP
+   ▼
+Nginx (reverse proxy, SSL termination)
+   ├── /          → /var/www/alertmns/  (Angular static)
+   ├── /api/      → http://127.0.0.1:4000  (Spring Boot)
+   └── /ws, /ws/  → http://127.0.0.1:4000  (WebSocket upgrade)
+   │
+Spring Boot (port 4000)
+   └── H2 in-memory
+```
+
+### Services systemd
+
+| Service | Commande | Rôle |
+|---|---|---|
+| `alertmns.service` | `java -jar alertmns-backend.jar --spring.profiles.active=prod` | Backend Spring Boot |
+| `nginx` | `nginx` | Reverse proxy + SSL |
+| `cloudflared-alertmns.service` | `cloudflared tunnel --url http://localhost:80` | Tunnel public HTTPS |
+
+### Récupérer l'URL Cloudflare
+
+```bash
+sudo grep -o 'https://[^ ]*trycloudflare.com' /var/log/cloudflared-alertmns.log | tail -1
+# ou
+~/url-alertmns.sh
+```
+
+### Configuration production (`application-prod.properties`)
+
+```properties
+server.port=4000
+spring.datasource.url=jdbc:h2:mem:alertmns
+spring.jpa.hibernate.ddl-auto=create-drop
+app.jwt.secret=alertmns_PROD_secret_key_mns_cda5_037_2026_very_long_key_ok
+app.cors.allowed-origins=https://cda-thomas.stagiairesmns.fr,http://mns-vmd-cda5-037.mns.lan
+```
+
+---
+
+## 15. Thème dark / light
+
+### Architecture CSS Custom Properties
+
+```scss
+/* styles.scss — thème sombre (défaut) */
+:root {
+  --bg-primary:    #1a1a2e;
+  --bg-secondary:  #16213e;
+  --bg-tertiary:   #0f3460;
+  --border-color:  #1e3a5f;
+  --text-primary:  #e6f1ff;
+  --text-secondary:#ccd6f6;
+  --text-muted:    #8892b0;
+  --accent:        #e94560;
+}
+
+body.light-theme {
+  --bg-primary:    #f0f2f5;
+  --bg-secondary:  #ffffff;
+  --bg-tertiary:   #e8edf3;
+  --border-color:  #d0d7e0;
+  --text-primary:  #1a1a2e;
+  --text-secondary:#2d3748;
+  --text-muted:    #718096;
+  --accent:        #e94560;  /* accent identique dans les deux thèmes */
+}
+```
+
+### Fichiers mis à jour
+
+Tous les composants utilisent `var(--variable)` au lieu de couleurs hexadécimales codées en dur :
+- `styles.scss` — variables globales + scrollbar
+- `chat.component.scss` — layout + bouton toggle
+- `sidebar.component.scss` — sidebar + modales
+- `chat-area.component.scss` — header + messages + input
+- `message-item.component.scss` — messages + réactions
+- `login.component.scss` — page de connexion
+
+### Persistance
+
+```typescript
+// ChatComponent — effect Angular 17
+effect(() => {
+  document.body.classList.toggle('light-theme', !this.isDarkMode());
+  localStorage.setItem('theme', this.isDarkMode() ? 'dark' : 'light');
+});
+```
+
+Le thème est restauré au rechargement via `localStorage.getItem('theme') !== 'light'` dans le signal initial.
+
+---
+
+*Documentation mise à jour le 2026-06-12 — AlertMNS v1.1.0*

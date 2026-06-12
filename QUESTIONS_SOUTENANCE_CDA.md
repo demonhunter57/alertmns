@@ -2084,6 +2084,7 @@ AlertMNS est une **messagerie interne sécurisée** développée pour Metz Numer
 | Messages privés (DM) | DirectConversation + notifications personnelles |
 | Export des conversations | JSON, CSV, XML |
 | Gestion des rôles | ADMIN / MANAGER / USER |
+| **Thème dark / light** | CSS Custom Properties + Signal Angular 17 + localStorage |
 
 **Architecture technique**
 
@@ -2095,6 +2096,21 @@ Authentification : JWT HMAC-SHA256 (7 jours)
 Transport temps réel : STOMP over WebSocket (SockJS fallback)
 ```
 
+**Sécurité renforcée (audit)**
+
+Un audit de sécurité a conduit aux corrections suivantes :
+- CORS : whitelist d'origines stricte (plus de wildcard `*` avec credentials)
+- WebSocket : contrôle d'accès aux canaux privés dans `WebSocketController`
+- Erreurs 500 : messages génériques (jamais la stack trace)
+- Nginx : console H2 retirée, HTTPS forcé sur port 80
+
+**Tests unitaires**
+
+17 tests JUnit 5 / Mockito répartis sur 3 classes :
+- `JwtTokenProviderTest` : génération, validation, expiration, falsification
+- `AuthServiceTest` : login valide, mot de passe incorrect, username inconnu, inscription
+- `ChannelServiceTest` : accès canal public/privé, création, suppression (droits)
+
 **Ce que j'ai appris**
 
 - Concevoir une architecture REST complète avec gestion des rôles
@@ -2102,6 +2118,8 @@ Transport temps réel : STOMP over WebSocket (SockJS fallback)
 - Gérer les communications temps réel avec STOMP (WebSocket bidirectionnel)
 - Utiliser Angular 17 avec les nouvelles APIs (Standalone Components, Signals, Control Flow)
 - Structurer un projet Java en couches respectant les principes SOLID
+- Implémenter un système de thèmes dark/light avec CSS Custom Properties
+- Auditer et corriger des vulnérabilités de sécurité (OWASP) sur une application en production
 
 ---
 
@@ -2128,12 +2146,15 @@ Les fichiers ne sont pas stockés en base mais dans un object storage.
 → Scalable, économique, sécurisé (URLs pré-signées)
 ```
 
-**4. Tests automatisés**
+**4. Tests automatisés** *(déjà partiellement implémentés en v1.1)*
 ```
-Couverture de tests > 80% :
-- Tests unitaires : services avec mocks (Mockito)
-- Tests d'intégration : @SpringBootTest + MockMvc
+En place (v1.1) :
+- 17 tests unitaires : JwtTokenProvider, AuthService, ChannelService (Mockito)
+
+À ajouter (v2.0) :
+- Tests d'intégration : @SpringBootTest + MockMvc (controller → service → H2)
 - Tests E2E : Playwright sur le frontend Angular
+- Objectif : couverture > 80%
 ```
 
 **5. Notifications push**
