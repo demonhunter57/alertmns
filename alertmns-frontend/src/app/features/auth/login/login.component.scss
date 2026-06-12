@@ -4,16 +4,18 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #1a1a2e;
+  background: var(--bg-primary);
+  transition: background 0.2s;
 }
 
 .login-card {
-  background: #16213e;
+  background: var(--bg-secondary);
   border-radius: 12px;
   padding: 2.5rem;
   width: 100%;
   max-width: 420px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  transition: background 0.2s;
 }
 
 .login-header {
@@ -21,7 +23,7 @@
   margin-bottom: 2rem;
 
   h1 {
-    color: #e94560;
+    color: var(--accent);
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: 2px;
@@ -29,7 +31,7 @@
   }
 
   p {
-    color: #8892b0;
+    color: var(--text-muted);
     font-size: 0.9rem;
     margin: 0;
   }
@@ -47,42 +49,42 @@
   gap: 0.4rem;
 
   label {
-    color: #ccd6f6;
+    color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
   }
 
   input {
-    background: #0f3460;
-    border: 1px solid #1a4a7a;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-input);
     border-radius: 8px;
-    color: #e6f1ff;
+    color: var(--text-primary);
     font-size: 0.95rem;
     padding: 0.75rem 1rem;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
 
     &:focus {
       outline: none;
-      border-color: #e94560;
+      border-color: var(--accent);
     }
 
     &::placeholder {
-      color: #4a5568;
+      color: var(--text-disabled);
     }
   }
 }
 
 .error-message {
   background: rgba(233, 69, 96, 0.15);
-  border: 1px solid #e94560;
+  border: 1px solid var(--accent);
   border-radius: 6px;
-  color: #e94560;
+  color: var(--accent);
   font-size: 0.85rem;
   padding: 0.6rem 1rem;
 }
 
 .btn-primary {
-  background: #e94560;
+  background: var(--accent);
   border: none;
   border-radius: 8px;
   color: white;
@@ -93,7 +95,7 @@
   transition: background 0.2s, transform 0.1s;
 
   &:hover:not(:disabled) {
-    background: #c73652;
+    background: var(--accent-hover);
     transform: translateY(-1px);
   }
 
@@ -126,7 +128,7 @@
   border-radius: 8px;
 
   p {
-    color: #8892b0;
+    color: var(--text-muted);
     font-size: 0.8rem;
     margin: 0 0 0.5rem;
   }

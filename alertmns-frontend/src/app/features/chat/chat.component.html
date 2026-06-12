@@ -22,4 +22,10 @@
     </div>
   }
 
+  <button
+    class="btn-theme-toggle"
+    [title]="isDarkMode() ? 'Passer en mode clair' : 'Passer en mode sombre'"
+    (click)="toggleTheme()"
+  >{{ isDarkMode() ? '☀️' : '🌙' }}</button>
+
 </div>

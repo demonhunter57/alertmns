@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -40,6 +40,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   channels = signal<Channel[]>([]);
   users = signal<User[]>([]);
   activeChannel = signal<Channel | null>(null);
+  isDarkMode = signal<boolean>(localStorage.getItem('theme') !== 'light');
 
   private subs = new Subscription();
 
@@ -49,7 +50,17 @@ export class ChatComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private wsService: WebSocketService,
     private router: Router
-  ) {}
+  ) {
+    effect(() => {
+      if (this.isDarkMode()) {
+        document.body.classList.remove('light-theme');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.add('light-theme');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -91,6 +102,10 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.activeChannel.set(channels[0] ?? null);
       }
     });
+  }
+
+  toggleTheme(): void {
+    this.isDarkMode.update(v => !v);
   }
 
   logout(): void {
