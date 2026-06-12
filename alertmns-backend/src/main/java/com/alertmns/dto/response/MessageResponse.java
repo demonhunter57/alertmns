@@ -31,7 +31,9 @@ public record MessageResponse(
         Instant createdAt,
         Instant editedAt
 ) {
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule())
+            .disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     public static MessageResponse from(Message message) {
         Map<String, List<String>> reactions = new HashMap<>();

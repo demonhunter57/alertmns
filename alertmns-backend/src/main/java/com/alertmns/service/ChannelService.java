@@ -107,6 +107,10 @@ public class ChannelService {
         channelRepository.delete(channel);
     }
 
+    public void assertAccess(UUID channelId, UUID userId) {
+        assertAccess(findChannel(channelId), userId);
+    }
+
     private void assertAccess(Channel channel, UUID userId) {
         if (!channel.isPrivate()) return;
         boolean isMember = channel.getMembers().stream()

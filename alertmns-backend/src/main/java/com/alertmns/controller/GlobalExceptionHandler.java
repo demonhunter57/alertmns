@@ -51,6 +51,6 @@ public class GlobalExceptionHandler {
                 .error("Unhandled exception: {}", ex.getMessage(), ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ErrorResponse.of(500, ex.getClass().getSimpleName() + ": " + ex.getMessage()));
+                .body(ErrorResponse.of(500, "Internal server error"));
     }
 }

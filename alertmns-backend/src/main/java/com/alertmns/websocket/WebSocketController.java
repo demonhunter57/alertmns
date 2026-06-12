@@ -3,6 +3,7 @@ package com.alertmns.websocket;
 import com.alertmns.dto.response.MessageResponse;
 import com.alertmns.dto.response.UserResponse;
 import com.alertmns.model.enums.UserStatus;
+import com.alertmns.service.ChannelService;
 import com.alertmns.service.MessageService;
 import com.alertmns.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class WebSocketController {
     private final SimpMessagingTemplate messagingTemplate;
     private final MessageService messageService;
     private final UserService userService;
+    private final ChannelService channelService;
 
     /** Envoi d'un message dans un canal. */
     @MessageMapping("/chat.send")
@@ -46,6 +49,13 @@ public class WebSocketController {
         UUID authorId = extractUserId(principal);
         UUID channelId = UUID.fromString((String) payload.get("channelId"));
         String content = (String) payload.get("content");
+
+        try {
+            channelService.assertAccess(channelId, authorId);
+        } catch (ResponseStatusException e) {
+            log.warn("WebSocket access denied: user {} on channel {}", authorId, channelId);
+            return;
+        }
 
         MessageResponse saved = messageService.saveMessage(channelId, authorId, content);
         messagingTemplate.convertAndSend(
