@@ -5,7 +5,7 @@
 > **Durée de l'oral** : 2h15 (présentation + questions jury)  
 > **Jury** : 2 à 3 professionnels du secteur  
 > **Projet de référence** : AlertMNS — Messagerie interne sécurisée  
-> Stack : Java 21 · Spring Boot 3 · Angular 17 · PostgreSQL · JWT · STOMP WebSocket
+> Stack : Java 21 · Spring Boot 3 · Angular 17 · H2 in-memory (dev) · PostgreSQL (cible v2.0) · JWT · STOMP WebSocket
 
 ---
 
@@ -552,6 +552,8 @@ PostgreSQL utilise un WAL (Write-Ahead Log) :
 → En cas de crash, PostgreSQL rejoue le journal pour récupérer les données
 → Une transaction committée ne sera jamais perdue
 ```
+
+> ⚠️ **AlertMNS v1 utilise H2 in-memory** : H2 garantit l'ACID dans la session (atomicité, cohérence, isolation), mais les données sont perdues au redémarrage car tout est en RAM. La durabilité complète avec WAL s'appliquera lors de la migration PostgreSQL (v2.0).
 
 ---
 
@@ -1147,7 +1149,7 @@ Testent l'application **entière** du point de vue de l'utilisateur, en simulant
 ```typescript
 // Playwright — test E2E AlertMNS
 test('login puis envoi de message', async ({ page }) => {
-    await page.goto('http://localhost:5173/login');
+    await page.goto('http://localhost:4200/login');
     await page.fill('[name=username]', 'admin');
     await page.fill('[name=password]', 'admin123');
     await page.click('button[type=submit]');
@@ -2106,6 +2108,7 @@ Un audit de sécurité a conduit aux corrections suivantes :
 
 **Tests unitaires**
 
+
 17 tests JUnit 5 / Mockito répartis sur 3 classes :
 - `JwtTokenProviderTest` : génération, validation, expiration, falsification
 - `AuthServiceTest` : login valide, mot de passe incorrect, username inconnu, inscription
@@ -2203,7 +2206,7 @@ DELETE /api/channels/{id}   → delete a specific channel
 - **gRPC** is faster but requires binary protocol and is harder to debug
 - **REST** is the industry standard, well-understood by any developer, easily testable with tools like Postman or curl
 
-**The result**: AlertMNS has 15 REST endpoints covering full CRUD for channels, messages, users, and authentication, plus dedicated export endpoints for JSON, CSV, and XML formats.
+**The result**: AlertMNS has 20 REST endpoints covering full CRUD for channels (5), messages (4), users (4), authentication (4), plus dedicated export endpoints for JSON, CSV, and XML formats (3).
 
 ---
 

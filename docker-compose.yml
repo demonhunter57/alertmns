@@ -3,6 +3,8 @@ services:
     build: ./alertmns-backend
     container_name: alertmns-backend
     restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
     networks:
       - alertmns-net
 

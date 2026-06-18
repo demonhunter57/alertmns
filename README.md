@@ -49,9 +49,11 @@ alertmns/
 │   └── nginx-alertmns.conf         ← Configuration Nginx (SSL, proxy)
 │
 ├── docker-compose.yml              ← Orchestration des deux conteneurs
-├── DOCUMENTATION.md                ← Documentation technique complète
-├── CHOIX_ARCHITECTURE.md           ← Justification des choix techniques
-└── QUESTIONS_SOUTENANCE_CDA.md     ← 50 Q/R pour la soutenance CDA
+├── docs.md/
+│   ├── DOCUMENTATION.md            ← Documentation technique complète
+│   ├── CHOIX_ARCHITECTURE.md       ← Justification des choix techniques
+│   ├── QUESTIONS_SOUTENANCE_CDA.md ← 50 Q/R pour la soutenance CDA
+│   └── SPRINTS.md                  ← Backlog organisé en 6 sprints
 ```
 
 ---
@@ -166,7 +168,11 @@ Les deux conteneurs partagent un réseau bridge `alertmns-net`. Le conteneur fro
 | `alertmns-backend` | `eclipse-temurin:21-jre-alpine` | 4000 |
 | `alertmns-frontend` | `nginx:alpine` | 80 (exposé) |
 
-> Le profil Spring `docker` est activé automatiquement (H2 console désactivée, CORS `http://localhost`).
+> Pour activer le profil Spring `docker` (H2 console désactivée, CORS `http://localhost`), ajouter dans `docker-compose.yml` sous le service `alertmns-backend` :
+> ```yaml
+> environment:
+>   - SPRING_PROFILES_ACTIVE=docker
+> ```
 
 ---
 

@@ -793,7 +793,7 @@ Composant **orchestrateur** (shell) — ne contient pas de logique d'affichage.
 - Maintenir `activeChannel` signal
 - Relayer les événements WebSocket de statut utilisateur vers le signal `users`
 - Passer les données aux composants enfants via `@Input`
-- Écouter les événements via `@Output` (channelSelected, logoutRequested)
+- Écouter les événements via `@Output` (channelSelected, logoutRequested, channelsChanged)
 - Gérer le **thème dark/light** (signal + `localStorage`)
 
 **Gestion du thème :**
@@ -833,6 +833,7 @@ Composant **présentationnel** (dumb component) : reçoit tout par `@Input`, ém
 
 @Output() channelSelected = new EventEmitter<Channel>();
 @Output() logoutRequested = new EventEmitter<void>();
+@Output() channelsChanged = new EventEmitter<void>();
 ```
 
 **Getters calculés :**

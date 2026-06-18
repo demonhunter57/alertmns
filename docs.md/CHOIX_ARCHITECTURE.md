@@ -1,8 +1,8 @@
 # Choix Architecturaux — AlertMNS
-## Pourquoi Java Spring Boot + Angular + PostgreSQL ?
+## Pourquoi Java Spring Boot + Angular + H2/PostgreSQL ?
 
 > **Projet** : AlertMNS — Messagerie interne sécurisée  
-> **Migration** : Node.js + React → Java 21 + Spring Boot 3 + Angular 17 + PostgreSQL  
+> **Migration** : Node.js + React → Java 21 + Spring Boot 3 + Angular 17 + H2 in-memory (dev) → PostgreSQL (cible v2.0)  
 > **Date** : 2026-06-12 (mis à jour)
 
 ---
