@@ -81,7 +81,7 @@ echo "  ✔ Fichiers copiés dans $WWW_DIR"
 
 # ── Configuration Nginx ────────────────────────────────────
 echo "Configuration Nginx..."
-sudo cp "$APP_DIR/deploy/nginx-alertmns.conf" /etc/nginx/sites-available/alertmns
+sudo cp "$APP_DIR/deploy/nginx-alertmns-local.conf" /etc/nginx/sites-available/alertmns
 sudo ln -sf /etc/nginx/sites-available/alertmns /etc/nginx/sites-enabled/alertmns
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
